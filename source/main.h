@@ -20,7 +20,7 @@
 #define NAME_LEN 256
 #define BUFFER_LEN 134217728
 #define FILE_POS dataRead
-#define ADV_FILE_POS(x) { if (FILE_POS + x >= BUFFER_LEN) return ERR_MEM; FILE_POS += x; }
+#define ADV_FILE_POS(x) { if (FILE_POS + (x) >= BUFFER_LEN) return ERR_MEM; FILE_POS += (x); }
 #define DUMP_NAME "importer-dump.scne"
 
 #define FLAG_DONE "--done"
@@ -39,7 +39,7 @@
 #define ERR_PATH -5
 
 typedef struct bagFile {
-    char path[PATH_LEN * 2];
+    char path[PATH_LEN << 1];
     char root[PATH_LEN];
     char name[NAME_LEN];
     const char *ext;

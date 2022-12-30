@@ -49,10 +49,10 @@ void errLog(const char *filepath)
         sprintf(reason, "unspecified");
 
 
-    char buf[PATH_LEN * 2];
+    char buf[PATH_LEN << 1];
     snprintf(buf, sizeof(buf) - 1, "ERROR %d | Failed to decompress %s... %s\n", _rc, strrchr(filepath, '/'), reason);
 #ifdef WRITE_ERR_LOG
-    char errPath[PATH_LEN * 2];
+    char errPath[PATH_LEN << 1];
     memset(errPath, 0, sizeof(errPath));
     snprintf(errPath, sizeof(errPath) - 1, "%s/error.txt", _procDir);
     fileWrite(errPath, "a+", buf, (uint32_t)strlen(buf));
@@ -226,7 +226,7 @@ int decompress(bagFile_t *file)
 #ifdef SUPPORT_07
     else if (buf[0] == 0x07)
         blockOffset = 2;
-#endif // SUPPORT_07A
+#endif // SUPPORT_07
     else if (buf[0] != 0x04)
         return _rc = ERR_FMT;
     buf[0] = 0x01;
@@ -234,7 +234,7 @@ int decompress(bagFile_t *file)
     while (FILE_POS < file->size)
     {
         uint32_t blockSize = *(uint32_t*)&data[FILE_POS];
-        ADV_FILE_POS(4 * blockOffset);
+        ADV_FILE_POS(blockOffset << 2);
         uint32_t blockEnd = blockSize + FILE_POS;
 
         uint32_t blockPos = 0;
@@ -253,7 +253,7 @@ int decompress(bagFile_t *file)
             }
 
             uint32_t temp = file->inflated + blockPos;
-            if (temp + literalLength > BUFFER_LEN * 2)
+            if (temp + literalLength > (BUFFER_LEN << 1))
                 return _rc = ERR_MEM;
             memcpy(&buf[temp], &data[FILE_POS], literalLength);
             ADV_FILE_POS(literalLength);
@@ -354,7 +354,7 @@ void paramPath(const char *arg)
         const char *ext = strrchr(dir->d_name, '.');
         if (ext == NULL || strlen(ext) != EXT_LEN)
             continue;
-        char temp[PATH_LEN * 2];
+        char temp[PATH_LEN << 1];
         snprintf(temp, sizeof(temp) - 1, "%s/%s", _dirBuf, dir->d_name);
         process(temp);
     }
@@ -384,7 +384,7 @@ void paramPath(const char *arg)
         const char *ext = strrchr(c_file.name, '.');
         if (ext == NULL || strlen(ext) != EXT_LEN)
             continue;
-        char temp[PATH_LEN * 2];
+        char temp[PATH_LEN << 1];
         snprintf(temp, sizeof(temp) - 1, "%s/%s", _dirBuf, c_file.name);
         process(temp);
     } while (!_findnext(handle, &c_file));
@@ -439,8 +439,8 @@ void getFlags(const int p, const char *arg[])
 
 int main(const int p, const char *arg[])
 {
-    buf = (uint8_t *)malloc(BUFFER_LEN * 2);
-    data = (uint8_t *)malloc(BUFFER_LEN * 2);
+    buf = (uint8_t *)malloc(BUFFER_LEN << 1);
+    data = (uint8_t *)malloc(BUFFER_LEN << 1);
     if (data == NULL || buf == NULL)
         return ERR_MEM;
 
