@@ -15,6 +15,7 @@
 int _mode = 0;
 int _count = 0;
 int _rc = ERR_OK;
+int _pOffset = 0;
 FILE *_dump = NULL;
 char _procDir[PATH_LEN];
 const char *_outDir = ".";
@@ -22,6 +23,7 @@ char _dirBuf[PATH_LEN];
 char _pattern[PATH_LEN];
 uint8_t *buf = NULL;
 uint8_t *data = NULL;
+
 
 int fileWrite(const char *path, const char *mode, uint8_t *buf, uint32_t size)
 {
@@ -49,10 +51,10 @@ void errLog(const char *filepath)
         sprintf(reason, "unspecified");
 
 
-    char buf[PATH_LEN << 1];
+    char buf[PATH_LEN * 2];
     snprintf(buf, sizeof(buf) - 1, "ERROR %d | Failed to decompress %s... %s\n", _rc, strrchr(filepath, '/'), reason);
 #ifdef WRITE_ERR_LOG
-    char errPath[PATH_LEN << 1];
+    char errPath[PATH_LEN * 2];
     memset(errPath, 0, sizeof(errPath));
     snprintf(errPath, sizeof(errPath) - 1, "%s/error.txt", _procDir);
     fileWrite(errPath, "a+", buf, (uint32_t)strlen(buf));
@@ -87,7 +89,7 @@ int writeToDisk(bagFile_t *file)
     if (_mode & MODE_DUMP)
     {
         DBG("writing to dump file\n");
-        fwrite((void*)buf, 1, file->inflated, _dump);
+        fwrite((void *)buf, 1, file->inflated, _dump);
     }
     else if (!strcmp(file->ext, ".bmap"))
     {
@@ -96,7 +98,7 @@ int writeToDisk(bagFile_t *file)
         if (offset == -1)
             goto err_fmt;
         strcpy(&file->path[pathLen - EXT_LEN], ".dds");
-        if (!fileWrite(file->path, "wb+", (void*)&buf[offset], file->inflated - offset))
+        if (!fileWrite(file->path, "wb+", (void *)&buf[offset], file->inflated - offset))
             goto err_io;
     }
     else
@@ -226,14 +228,14 @@ int decompress(bagFile_t *file)
 #ifdef SUPPORT_07
     else if (buf[0] == 0x07)
         blockOffset = 2;
-#endif // SUPPORT_07
+#endif // SUPPORT_07A
     else if (buf[0] != 0x04)
         return _rc = ERR_FMT;
     buf[0] = 0x01;
 
     while (FILE_POS < file->size)
     {
-        uint32_t blockSize = *(uint32_t*)&data[FILE_POS];
+        uint32_t blockSize = *(uint32_t *)&data[FILE_POS];
         ADV_FILE_POS(blockOffset << 2);
         uint32_t blockEnd = blockSize + FILE_POS;
 
@@ -253,7 +255,7 @@ int decompress(bagFile_t *file)
             }
 
             uint32_t temp = file->inflated + blockPos;
-            if (temp + literalLength > (BUFFER_LEN << 1))
+            if (temp + literalLength > BUFFER_LEN * 2)
                 return _rc = ERR_MEM;
             memcpy(&buf[temp], &data[FILE_POS], literalLength);
             ADV_FILE_POS(literalLength);
@@ -262,7 +264,7 @@ int decompress(bagFile_t *file)
             if (FILE_POS == blockEnd)
                 break;
 
-            uint16_t offset = *(uint16_t*)&data[FILE_POS];
+            uint16_t offset = *(uint16_t *)&data[FILE_POS];
             ADV_FILE_POS(2);
 
             if (matchLength == 0x0F + 4)
@@ -338,8 +340,17 @@ void paramOut(const int params, const char *arg[], int *i)
 #endif // __linux__
 }
 
-void paramPath(const char *arg)
+void paramPath(const char *arg, int *i)
 {
+    if (i == NULL)
+        return;
+    if (arg[0] == '-')
+    {
+        if (!strcmp(arg, FLAG_OUT))
+            *i += 2;
+        return;
+    }
+
 #ifdef __linux__  
     DIR *d = opendir(arg);
     if (!d)
@@ -354,7 +365,7 @@ void paramPath(const char *arg)
         const char *ext = strrchr(dir->d_name, '.');
         if (ext == NULL || strlen(ext) != EXT_LEN)
             continue;
-        char temp[PATH_LEN << 1];
+        char temp[PATH_LEN * 2];
         snprintf(temp, sizeof(temp) - 1, "%s/%s", _dirBuf, dir->d_name);
         process(temp);
     }
@@ -384,7 +395,7 @@ void paramPath(const char *arg)
         const char *ext = strrchr(c_file.name, '.');
         if (ext == NULL || strlen(ext) != EXT_LEN)
             continue;
-        char temp[PATH_LEN << 1];
+        char temp[PATH_LEN * 2];
         snprintf(temp, sizeof(temp) - 1, "%s/%s", _dirBuf, c_file.name);
         process(temp);
     } while (!_findnext(handle, &c_file));
@@ -411,7 +422,7 @@ void handleInteractive()
         if (strlen(buf) <= EXT_LEN)
             continue;
         if (strcmp(buf, FLAG_DONE))
-            paramPath(buf);
+            paramPath(buf, NULL);
         else
             break;
     }
@@ -429,7 +440,10 @@ void getFlags(const int p, const char *arg[])
     for (int i = 1; i < p; i++)
     {
         if (!strcmp(arg[i], FLAG_MULTI))
+        {
             _mode |= MODE_MULTI;
+
+        }
         else if (!strcmp(arg[i], FLAG_DUMP))
             _mode |= MODE_DUMP;
         else if (!strcmp(arg[i], FLAG_OUT))
@@ -449,13 +463,8 @@ int main(const int p, const char *arg[])
     dumpOpen();
     for (int i = 1; i < p; i++)
     {
-        if (strcmp(arg[i], FLAG_MULTI)
-            && strcmp(arg[i], FLAG_DUMP)
-            && strcmp(arg[i], FLAG_OUT))
-        {
-            DBG("arg %s\n", arg[i]);
-            paramPath(arg[i]);
-        }
+        DBG("arg %s\n", arg[i]);
+        paramPath(arg[i], i);
     }
     handleInteractive();
     dumpClose();
