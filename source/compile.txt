@@ -1,0 +1,8 @@
+
+
+Compile for linux:
+    make main
+
+Compile for windows:
+    sudo apt-get install gcc-mingw-w64
+    i686-w64-mingw32-gcc-win32 main.c -o main.exe
