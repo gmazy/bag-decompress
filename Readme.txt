@@ -1,4 +1,4 @@
-Bagfile Decompressor for Wreckfest Alpha v1
+Bagfile Decompressor for Wreckfest Alpha v3
 ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
 
 Usage:
