@@ -226,7 +226,7 @@ int decompress(bagFile_t *file)
     if (buf[0] == 0x08)
         return _rc = ERR_ENC;
 #ifdef SUPPORT_07
-    else if (buf[0] == 0x07)
+    else if (buf[0] == 0x07 || buf[0] == 0x0A)
         blockOffset = 2;
 #endif // SUPPORT_07A
     else if (buf[0] != 0x04)

@@ -18,7 +18,7 @@
 #define EXT_LEN 5
 #define PATH_LEN 1024
 #define NAME_LEN 256
-#define BUFFER_LEN 134217728
+#define BUFFER_LEN 268435456 //256 MB
 #define FILE_POS dataRead
 #define ADV_FILE_POS(x) { if (FILE_POS + (x) >= BUFFER_LEN) return ERR_MEM; FILE_POS += (x); }
 #define DUMP_NAME "importer-dump.scne"
