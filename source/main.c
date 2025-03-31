@@ -236,6 +236,10 @@ int decompress(bagFile_t *file)
     while (FILE_POS < file->size)
     {
         uint32_t blockSize = *(uint32_t *)&data[FILE_POS];
+        // Exit if reading file padded with empty data.
+        if (blockSize == 0)
+            break;
+            
         ADV_FILE_POS(blockOffset << 2);
         uint32_t blockEnd = blockSize + FILE_POS;
 
