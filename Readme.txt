@@ -5,7 +5,7 @@ Usage:
     - Drag and drop bagfile over to remove compression. Files can be recompressed after with Bagedit.
     - Drag and drop .bmap file over to extract .dds.
 
-    - Double click or run using console to load interactive mode.
+    - Double click or run using console to load experimental interactive mode.
 
 
 Thanks to:
